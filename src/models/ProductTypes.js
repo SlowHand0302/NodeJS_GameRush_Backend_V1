@@ -6,7 +6,7 @@ const ProductTypes = new Schema(
         image: { type: String, required: true, default: '' },
         // typeId: { type: String, required: true },
         name: { type: String, required: true },
-        description: { type: String, required: true },
+        description: { type: String },
         originalPrice: { type: Number, required: true, default: 0 },
         sellPrice: { type: Number, required: true, default: 0 },
         isHot: { type: Boolean, required: true, default: false },

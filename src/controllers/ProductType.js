@@ -1,19 +1,30 @@
 const { ProductTypes } = require('../models');
+const fse = require('fs-extra');
+const { URL } = require('url');
+require('dotenv').config();
 
 // /api/productType/create
 module.exports.POST_Create = async (req, res, next) => {
-    return await ProductTypes.create({ ...req.body })
+    const file = req.file;
+    if (!file) {
+        return res.status(300).json({
+            success: false,
+            msg: 'Image not found',
+        });
+    }
+    return await ProductTypes.create({ ...req.body, image: process.env.DOMAIN + '/uploads/' + file.filename })
         .then((productType) => {
             return res.status(200).json({
-                sucess: true,
+                success: true,
                 msg: 'Create new product type successfully',
                 productType,
             });
         })
         .catch((err) => {
+            fse.unlinkSync(file.path);
             return res.status(500).json({
                 success: false,
-                msg: err,
+                msg: err.message,
             });
         });
 };
@@ -32,7 +43,7 @@ module.exports.GET_readMany = async (req, res, next) => {
                 });
             }
             return res.status(200).json({
-                sucess: true,
+                success: true,
                 msg: `Had read ${productTypes.length} lines`,
                 productTypes,
             });
@@ -91,8 +102,16 @@ module.exports.GET_readByFilter = async (req, res, next) => {
 
 module.exports.PUT_updateOne = async (req, res, next) => {
     const { _id } = req.params;
-    return await ProductTypes.findByIdAndUpdate({ _id }, { ...req.body }, { returnOriginal: false })
+    const updateData = { ...req.body };
+    if (req.file) {
+        updateData['image'] = process.env.DOMAIN + '/uploads/' + req.file.filename;
+    }
+    return await ProductTypes.findByIdAndUpdate({ _id }, { ...updateData }, { returnOriginal: true })
         .then((productType) => {
+            if (req.file) {
+                const parsedUrl = new URL(productType.image);
+                fse.unlinkSync('./src/public' + parsedUrl.pathname);
+            }
             if (!productType) {
                 return res.status(404).json({
                     success: false,
