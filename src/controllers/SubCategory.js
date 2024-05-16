@@ -48,7 +48,7 @@ module.exports.GET_ReadByCategory = async (req, res, next) => {
     return await SubCategories.find({ category })
         .then((subCategories) => {
             if (subCategories.length === 0) {
-                return res.status(404).json({
+                return res.status(400).json({
                     success: false,
                     msg: 'Not found SubCategories matched with conditions',
                 });

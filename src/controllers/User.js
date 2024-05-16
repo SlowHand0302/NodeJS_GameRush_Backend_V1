@@ -1,4 +1,5 @@
 const { Users } = require('../models');
+const jwt = require('jsonwebtoken')
 
 // api/user/create
 module.exports.POST_CreateUser = async (req, res, next) => {
@@ -108,6 +109,57 @@ module.exports.PUT_UpdateOne = async (req, res, next) => {
             return res.status(200).json({
                 success: true,
                 msg: 'Update successfully',
+                user,
+            });
+        })
+        .catch((err) => {
+            return res.status(500).json({
+                success: false,
+                msg: err,
+            });
+        });
+};
+
+// api/user/search?name=
+module.exports.GET_Search = async (req, res, next) => {
+    const name = req.query.name;
+    return await Users.find({ name: { $regex: name, $options: 'i' } })
+        .limit(10)
+        .exec()
+        .then((users) => {
+            if (!users) {
+                return res.status(400).json({
+                    success: false,
+                    msg: 'Not Found User match condition',
+                });
+            }
+            return res.status(200).json({
+                success: true,
+                msg: `Found router ${users.length} users`,
+                users,
+            });
+        })
+        .catch((err) => {
+            return res.status(500).json({
+                success: false,
+                msg: err,
+            });
+        });
+};
+
+// api/user/auth
+module.exports.POST_Authentication = async (req, res, next) => {
+    return await Users.find({ ...req.body })
+        .then((user) => {
+            if (user.length === 0) {
+                return res.status(401).json({
+                    success: false,
+                    msg: 'Invalide User',
+                });
+            }
+            return res.status(200).json({
+                success: true,
+                msg: 'Found Users',
                 user,
             });
         })

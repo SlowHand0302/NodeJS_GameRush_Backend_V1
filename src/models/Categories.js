@@ -5,11 +5,11 @@ const Categories = new Schema(
     {
         categoryName: { type: String, required: true },
         state: { type: String, required: true, enum: ['active', 'inactive'], default: 'active' },
-        subCategories: [{ type: mongoose.Types.ObjectId, ref: 'SubCategories' }],
+        type: { type: String, required: true, enum: ['game', 'function', 'app'] },
+        // subCategories: [{ type: mongoose.Types.ObjectId, ref: 'SubCategories' }],
     },
     {
         timestamps: true,
     },
 );
-
 module.exports = mongoose.model('Categories', Categories);

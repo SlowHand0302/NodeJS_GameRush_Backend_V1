@@ -67,3 +67,71 @@ module.exports.PUT_UpdateOne = async (req, res, next) => {
             });
         });
 };
+
+// api/product/ReadByType/productTypeId
+module.exports.GET_ReadByType = async (req, res, next) => {
+    const { productTypeId } = req.params;
+    return await Products.find({ productTypeId })
+        .then((products) => {
+            if (products.length === 0) {
+                return res.status(400).json({
+                    success: false,
+                    msg: 'Not found products match condition',
+                });
+            }
+            return res.status(200).json({
+                success: true,
+                msg: `Found ${products.length} products`,
+                products,
+            });
+        })
+        .catch((err) => {
+            return res.status(500).json({
+                success: false,
+                msg: err,
+            });
+        });
+};
+
+// api/product/CountByType/productTypeId
+module.exports.GET_CountByType = async (req, res, next) => {
+    const { productTypeId } = req.params;
+    return await Products.countDocuments({ productTypeId })
+        .then((number) => {
+            return res.status(200).json({
+                success: true,
+                msg: 'Count success',
+                number,
+            });
+        })
+        .catch((err) => {
+            console.log(err);
+        });
+};
+
+// api/product/readBySort/sort=type
+module.exports.GET_ReadBySort = async (req, res, next) => {
+    const { sort } = req.query;
+    return await Products.find({})
+        .sort(sort)
+        .lean()
+        .then((products) => {
+            if (products.length === 0) {
+                return res.status(400).json({
+                    success: false,
+                    msg: 'Empty Database',
+                });
+            }
+            return res.status(200).json({
+                success: true,
+                msg: `Found ${products.length} products`,
+                products,
+            });
+        })
+        .catch((err) => {
+            return res.status(500).json({
+                success: false,
+                msg: err,
+            });
+        });
+};

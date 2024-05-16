@@ -33,11 +33,11 @@ module.exports.POST_Create = async (req, res, next) => {
 module.exports.GET_readMany = async (req, res, next) => {
     return await ProductTypes.find({})
         .populate({ path: 'categories', select: 'categoryName' })
-        .populate({ path: 'subCategories', select: 'subCategoryName' })
+        // .populate({ path: 'subCategories', select: 'subCategoryName' })
         .lean()
         .then((productTypes) => {
             if (productTypes.length === 0) {
-                return res.status(404).json({
+                return res.status(400).json({
                     success: false,
                     msg: 'Empty Database',
                 });
@@ -76,12 +76,12 @@ module.exports.GET_readByFilter = async (req, res, next) => {
     query = { ...query, ...req.query };
     return await ProductTypes.find(query)
         .populate({ path: 'categories', select: 'categoryName' })
-        .populate({ path: 'subCategories', select: 'subCategoryName' })
+        // .populate({ path: 'subCategories', select: 'subCategoryName' })
         .sort(sort || 'createdAt')
         .lean()
         .then((productTypes) => {
             if (productTypes.length === 0) {
-                return res.status(404).json({
+                return res.status(400).json({
                     success: false,
                     msg: 'Not found product types matched with conditions',
                 });
@@ -100,6 +100,7 @@ module.exports.GET_readByFilter = async (req, res, next) => {
         });
 };
 
+// /api/productType/updateOne/:_id
 module.exports.PUT_updateOne = async (req, res, next) => {
     const { _id } = req.params;
     const updateData = { ...req.body };
@@ -130,4 +131,47 @@ module.exports.PUT_updateOne = async (req, res, next) => {
                 msg: err,
             });
         });
+};
+
+// api/productType/search?name=
+module.exports.GET_Search = async (req, res, next) => {
+    const { name } = req.query;
+    return await ProductTypes.find({ name: { $regex: name, $options: 'i' }, status: 'available' })
+        .limit(10)
+        .exec()
+        .then((productTypes) => {
+            if (!productTypes) {
+                return res.status(400).json({
+                    success: false,
+                    msg: 'Not Found Product Types match condition ',
+                });
+            }
+            return res.status(200).json({
+                success: true,
+                msg: `Found ${productTypes.length} Product Types`,
+                productTypes,
+            });
+        })
+        .catch((error) => {
+            return res.status(500).json({
+                success: true,
+                msg: error,
+            });
+        });
+};
+
+// /api/productType/uploadCK
+module.exports.POST_uploadImageCK = async (req, res, next) => {
+    const file = req.file;
+    console.log(file);
+    if (!file) {
+        return res.status(500).json({
+            success: false,
+            msg: 'File not found',
+        });
+    }
+    return res.status(200).json({
+        success: true,
+        url: process.env.DOMAIN + '/uploads/' + file.filename,
+    });
 };
