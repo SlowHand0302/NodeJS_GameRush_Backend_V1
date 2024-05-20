@@ -58,27 +58,49 @@ module.exports.GET_readMany = async (req, res, next) => {
 
 // /api/productType/readByFilter
 module.exports.GET_readByFilter = async (req, res, next) => {
-    const { sort } = req.query;
-    let query = {};
-    // create query for filter by price range
-    if (req.query.minPrice || req.query.maxPrice) {
-        query.sellPrice = {};
-        if (req.query.minPrice) {
-            query.sellPrice.$gte = req.query.minPrice;
+    const { sort = 'createdAt', categories, minPrice, maxPrice } = req.query;
+    let $match = {};
+    const pipeLine = [
+        {
+            $lookup: {
+                from: 'categories', // Assuming your Categories collection is named 'categories'
+                localField: 'categories',
+                foreignField: '_id',
+                as: 'matchedCategories',
+            },
+        },
+        {
+            $sort: {
+                [`${sort.includes('-') ? sort.split('-')[1] : sort}`]: sort.includes('-') ? -1 : 1,
+            },
+        },
+    ];
+    // create query for filter by sell price range
+    if (minPrice || maxPrice) {
+        $match.sellPrice = {};
+        if (minPrice) {
+            $match.sellPrice.$gte = Number(minPrice);
             delete req.query.minPrice;
         }
-        if (req.query.maxPrice) {
-            query.sellPrice.$lte = req.query.maxPrice;
+        if (maxPrice) {
+            $match.sellPrice.$lte = Number(maxPrice);
             delete req.query.maxPrice;
         }
     }
+    // create query for filter by category
+    if (categories) {
+        $match['matchedCategories.categoryName'] = categories;
+        delete req.query.categories;
+    }
+    // convert string to boolean for filter
+    if (req.query?.isHot) {
+        $match['isHot'] = req.query.isHot === 'true' ? true : false;
+        delete req.query.isHot;
+    }
     delete req.query.sort;
-    query = { ...query, ...req.query };
-    return await ProductTypes.find(query)
-        .populate({ path: 'categories', select: 'categoryName' })
-        // .populate({ path: 'subCategories', select: 'subCategoryName' })
-        .sort(sort || 'createdAt')
-        .lean()
+
+    return await ProductTypes.aggregate([...pipeLine, { $match: { ...$match, ...req.query } }])
+        .exec()
         .then((productTypes) => {
             if (productTypes.length === 0) {
                 return res.status(400).json({
