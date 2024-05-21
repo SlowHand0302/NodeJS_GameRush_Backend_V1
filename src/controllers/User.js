@@ -5,7 +5,6 @@ const jwt = require('jsonwebtoken')
 module.exports.POST_CreateUser = async (req, res, next) => {
     return await Users.create({ ...req.body })
         .then((user) => {
-            console.log(user);
             return res.status(200).json({
                 sucess: true,
                 msg: 'Create Success',

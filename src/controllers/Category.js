@@ -99,7 +99,6 @@ module.exports.GET_ReadOne = async (req, res, next) => {
 // api/category/updateOne/:_id
 module.exports.PUT_UpdateOne = async (req, res, next) => {
     const { _id } = req.params;
-    console.log(req.body);
     return await Categories.findOneAndUpdate({ _id }, { ...req.body }, { returnOriginal: false })
         .then((category) => {
             if (!category) {

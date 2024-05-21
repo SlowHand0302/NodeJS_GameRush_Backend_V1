@@ -1,11 +1,14 @@
 const { ProductTypes } = require('../models');
 const fse = require('fs-extra');
 const { URL } = require('url');
+const mongoose = require('mongoose');
+const { ObjectId } = mongoose.Types;
 require('dotenv').config();
 
 // /api/productType/create
 module.exports.POST_Create = async (req, res, next) => {
     const file = req.file;
+    console.log(file);
     if (!file) {
         return res.status(300).json({
             success: false,
@@ -58,15 +61,15 @@ module.exports.GET_readMany = async (req, res, next) => {
 
 // /api/productType/readByFilter
 module.exports.GET_readByFilter = async (req, res, next) => {
-    const { sort = 'createdAt', categories, minPrice, maxPrice } = req.query;
+    const { sort = 'createdAt', categories = [], minPrice, maxPrice, _id } = req.query;
     let $match = {};
-    const pipeLine = [
+    const pipeline = [
         {
             $lookup: {
                 from: 'categories', // Assuming your Categories collection is named 'categories'
                 localField: 'categories',
                 foreignField: '_id',
-                as: 'matchedCategories',
+                as: 'categories',
             },
         },
         {
@@ -87,9 +90,10 @@ module.exports.GET_readByFilter = async (req, res, next) => {
             delete req.query.maxPrice;
         }
     }
-    // create query for filter by category
+    // create query for filter by category (1 or many)
     if (categories) {
-        $match['matchedCategories.categoryName'] = categories;
+        // $match['categories.categoryName'] = categories;
+        $match['categories.categoryName'] = typeof categories === 'string' ? categories : { $all: [...categories] };
         delete req.query.categories;
     }
     // convert string to boolean for filter
@@ -97,9 +101,14 @@ module.exports.GET_readByFilter = async (req, res, next) => {
         $match['isHot'] = req.query.isHot === 'true' ? true : false;
         delete req.query.isHot;
     }
-    delete req.query.sort;
+    if (_id && ObjectId.isValid(_id)) {
+        $match._id = new ObjectId(_id);
+        delete req.query._id;
+    }
 
-    return await ProductTypes.aggregate([...pipeLine, { $match: { ...$match, ...req.query } }])
+    delete req.query.sort;
+    console.log($match);
+    return await ProductTypes.aggregate([...pipeline, { $match: { ...$match, ...req.query } }])
         .exec()
         .then((productTypes) => {
             if (productTypes.length === 0) {
@@ -185,7 +194,6 @@ module.exports.GET_Search = async (req, res, next) => {
 // /api/productType/uploadCK
 module.exports.POST_uploadImageCK = async (req, res, next) => {
     const file = req.file;
-    console.log(file);
     if (!file) {
         return res.status(500).json({
             success: false,
