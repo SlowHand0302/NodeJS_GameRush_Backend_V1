@@ -61,7 +61,7 @@ module.exports.GET_readMany = async (req, res, next) => {
 
 // /api/productType/readByFilter
 module.exports.GET_readByFilter = async (req, res, next) => {
-    const { sort = 'createdAt', categories = [], minPrice, maxPrice, _id } = req.query;
+    const { sort = 'createdAt', categories, minPrice, maxPrice, _id, slug } = req.query;
     let $match = {};
     const pipeline = [
         {
@@ -90,11 +90,17 @@ module.exports.GET_readByFilter = async (req, res, next) => {
             delete req.query.maxPrice;
         }
     }
-    // create query for filter by category (1 or many)
+    // create query for filter by category-name (1 or many)
     if (categories) {
         // $match['categories.categoryName'] = categories;
         $match['categories.categoryName'] = typeof categories === 'string' ? categories : { $all: [...categories] };
         delete req.query.categories;
+    }
+    // create query for filter by category-slug (1 or many)
+    if (slug) {
+        // $match['categories.categoryName'] = categories;
+        $match['categories.slug'] = typeof slug === 'string' ? slug : { $all: [...slug] };
+        delete req.query.slug;
     }
     // convert string to boolean for filter
     if (req.query?.isHot) {
@@ -107,7 +113,7 @@ module.exports.GET_readByFilter = async (req, res, next) => {
     }
 
     delete req.query.sort;
-    console.log($match);
+    // console.log($match);
     return await ProductTypes.aggregate([...pipeline, { $match: { ...$match, ...req.query } }])
         .exec()
         .then((productTypes) => {

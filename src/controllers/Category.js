@@ -1,8 +1,9 @@
 const { Categories } = require('../models');
+const { convertToASCII } = require('../utils');
 
 // api/category/create
 module.exports.POST_Create = async (req, res, next) => {
-    return await Categories.create({ ...req.body })
+    return await Categories.create({ ...req.body, slug: convertToASCII(req.body.categoryName) })
         .then((category) => {
             return res.status(200).json({
                 success: true,
