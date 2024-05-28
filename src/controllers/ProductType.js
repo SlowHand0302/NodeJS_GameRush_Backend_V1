@@ -35,7 +35,8 @@ module.exports.POST_Create = async (req, res, next) => {
 // /api/productType/readMany
 module.exports.GET_readMany = async (req, res, next) => {
     return await ProductTypes.find({})
-        .populate({ path: 'categories', select: 'categoryName' })
+        .populate([{ path: 'categories', select: 'categoryName' }, { path: 'products' }])
+
         // .populate({ path: 'subCategories', select: 'subCategoryName' })
         .lean()
         .then((productTypes) => {
@@ -144,7 +145,12 @@ module.exports.PUT_updateOne = async (req, res, next) => {
     if (req.file) {
         updateData['image'] = process.env.DOMAIN + '/uploads/' + req.file.filename;
     }
-    return await ProductTypes.findByIdAndUpdate({ _id }, { ...updateData }, { returnOriginal: true })
+    return await ProductTypes.findByIdAndUpdate(
+        { _id },
+        { ...updateData },
+        { overwrite: true },
+        { returnOriginal: true },
+    )
         .then((productType) => {
             if (req.file) {
                 const parsedUrl = new URL(productType.image);

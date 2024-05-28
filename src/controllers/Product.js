@@ -46,7 +46,7 @@ module.exports.GET_ReadMany = async (req, res, next) => {
 // api/product/updateOne/_id
 module.exports.PUT_UpdateOne = async (req, res, next) => {
     const { _id } = req.params;
-    return await Products.findOneAndUpdate({ _id }, { ...req.body }, { returnOriginal: false })
+    return await Products.findOneAndUpdate({ _id }, { ...req.body }, { overwrite: true }, { returnOriginal: false })
         .then((product) => {
             if (!product) {
                 return res.status(404).json({
@@ -96,7 +96,7 @@ module.exports.GET_ReadByType = async (req, res, next) => {
 // api/product/CountByType/productTypeId
 module.exports.GET_CountByType = async (req, res, next) => {
     const { productTypeId } = req.params;
-    return await Products.countDocuments({ productTypeId })
+    return await Products.countDocuments({ productTypeId, status: 'available' })
         .then((number) => {
             return res.status(200).json({
                 success: true,
@@ -120,6 +120,32 @@ module.exports.GET_ReadBySort = async (req, res, next) => {
                 return res.status(400).json({
                     success: false,
                     msg: 'Empty Database',
+                });
+            }
+            return res.status(200).json({
+                success: true,
+                msg: `Found ${products.length} products`,
+                products,
+            });
+        })
+        .catch((err) => {
+            return res.status(500).json({
+                success: false,
+                msg: err,
+            });
+        });
+};
+
+// api/product/readByTypeAndQuantity
+module.exports.GET_ReadByTypeAndQuantity = async (req, res, next) => {
+    const { typeId, quantity } = req.query;
+    return await Products.find({ productTypeId: typeId, status: 'available' })
+        .limit(quantity)
+        .then((products) => {
+            if (products.length === 0) {
+                return res.status(400).json({
+                    success: false,
+                    msg: 'Not found any products',
                 });
             }
             return res.status(200).json({

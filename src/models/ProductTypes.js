@@ -10,6 +10,7 @@ const ProductTypes = new Schema(
         sellPrice: { type: Number, required: true, default: 0 },
         isHot: { type: Boolean, required: true, default: false },
         categories: [{ type: mongoose.Types.ObjectId, ref: 'Categories' }],
+        products: [{ type: mongoose.Types.ObjectId, ref: 'Products' }],
         // subCategories: [{ type: mongoose.Types.ObjectId, ref: 'SubCategories' }],
         businessType: { type: String, required: true, enum: ['extend', 'upgrade', 'account'] },
         useTime: { type: String, required: true },

@@ -1,4 +1,7 @@
 const { Payments } = require('../models');
+const Stripe = require('stripe');
+require('dotenv').config();
+const stripe = Stripe(process.env.REACT_APP_STRIPE_SECRET_KEY);
 
 // api/payment/readMany
 module.exports.GET_ReadMany = async (req, res, next) => {
@@ -65,4 +68,29 @@ module.exports.PUT_UpdateOne = async (req, res, next) => {
                 msg: err,
             });
         });
+};
+
+// api/payment/stripe/config
+module.exports.GET_StripeConfig = async (req, res, next) => {
+    return res.status(200).json({
+        publicshableKey: process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY,
+    });
+};
+
+// api/payment/stripe/create-payment-intent
+module.exports.POST_StripePaymentIntent = async (req, res, next) => {
+    try {
+        const paymentIntent = await stripe.paymentIntents.create({
+            currency: 'eur',
+            amount: 1999,
+            automatic_payment_methods: {
+                enabled: true,
+            },
+        });
+        return res.status(200).json({
+            clientSecret: paymentIntent.client_secret,
+        });
+    } catch (error) {
+        return res.status(400).json(error);
+    }
 };

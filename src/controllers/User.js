@@ -1,19 +1,19 @@
 const { Users } = require('../models');
-const jwt = require('jsonwebtoken')
-
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
 // api/user/create
 module.exports.POST_CreateUser = async (req, res, next) => {
     return await Users.create({ ...req.body })
         .then((user) => {
             return res.status(200).json({
-                sucess: true,
+                success: true,
                 msg: 'Create Success',
                 data: user,
             });
         })
         .catch((err) => {
             return res.status(500).json({
-                sucess: false,
+                success: false,
                 msg: err,
             });
         });
@@ -37,7 +37,7 @@ module.exports.GET_ReadMany = async (req, res, next) => {
         })
         .catch((err) => {
             return res.status(500).json({
-                sucess: false,
+                success: false,
                 msg: err,
             });
         });
@@ -55,14 +55,14 @@ module.exports.GET_ReadOne = async (req, res, next) => {
                 });
             }
             return res.status(200).json({
-                sucess: true,
+                success: true,
                 msg: 'User is found',
                 user,
             });
         })
         .catch((err) => {
             return res.status(500).json({
-                sucess: false,
+                success: false,
                 msg: err.message,
             });
         });
@@ -88,7 +88,7 @@ module.exports.GET_ReadBySort = async (req, res, next) => {
         })
         .catch((err) => {
             return res.status(500).json({
-                sucess: false,
+                success: false,
                 msg: err,
             });
         });
@@ -148,24 +148,33 @@ module.exports.GET_Search = async (req, res, next) => {
 
 // api/user/auth
 module.exports.POST_Authentication = async (req, res, next) => {
-    return await Users.find({ ...req.body })
-        .then((user) => {
-            if (user.length === 0) {
-                return res.status(401).json({
-                    success: false,
-                    msg: 'Invalide User',
-                });
-            }
-            return res.status(200).json({
-                success: true,
-                msg: 'Found Users',
-                user,
+    const { email, password } = req.body;
+    return await Users.findOne({ email }).then((user) => {
+        if (!user) {
+            return res.status(404).json({
+                auth: false,
+                msg: 'Not found User',
             });
-        })
-        .catch((err) => {
-            return res.status(500).json({
-                success: false,
-                msg: err,
+        }
+        const passwordIsValid = password === user.password;
+        if (!passwordIsValid) {
+            return res.status(401).json({
+                auth: false,
+                msg: 'Wrong Password',
+                token: null,
             });
+        }
+        const token = jwt.sign({ id: user._id }, process.env.SECRET_KEY, { expiresIn: 86400 });
+        return res.status(200).json({
+            auth: true,
+            msg: 'Login Success',
+            token,
+            user: {
+                id: user._id,
+                name: user.name,
+                phoneNumber: user.phoneNumb,
+                email: user.email,
+            },
         });
+    });
 };

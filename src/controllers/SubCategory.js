@@ -29,7 +29,7 @@ module.exports.GET_ReadMany = async (req, res, next) => {
                 });
             }
             return res.status(200).json({
-                sucess: true,
+                success: true,
                 msg: `Had read ${subCategories.length} lines`,
                 subCategories,
             });
@@ -70,8 +70,7 @@ module.exports.GET_ReadByCategory = async (req, res, next) => {
 // /api/genre/updateOne/:_id
 module.exports.PUT_UpdateOne = async (req, res, next) => {
     const { _id } = req.params;
-    return await SubCategories
-        .findOneAndUpdate({ _id }, { ...req.body }, { returnOriginal: false })
+    return await SubCategories.findOneAndUpdate({ _id }, { ...req.body }, { returnOriginal: false })
         .then((subCategory) => {
             if (!subCategory) {
                 return res.status(404).json({
@@ -80,14 +79,14 @@ module.exports.PUT_UpdateOne = async (req, res, next) => {
                 });
             }
             return res.status(200).json({
-                sucess: true,
-                msg: `Updated ${subCategory.subCategoryName} sucessfully`,
+                success: true,
+                msg: `Updated ${subCategory.subCategoryName} successfully`,
                 subCategory,
             });
         })
         .catch((err) => {
             return res.status(500).json({
-                sucess: false,
+                success: false,
                 msg: err,
             });
         });

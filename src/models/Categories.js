@@ -5,7 +5,7 @@ const Categories = new Schema(
     {
         categoryName: { type: String, required: true },
         state: { type: String, required: true, enum: ['active', 'inactive'], default: 'active' },
-        type: { type: String, required: true, enum: ['game', 'function', 'app'] },
+        type: { type: String, required: true, enum: ['game', 'function', 'app', 'service'] },
         slug: { type: String, required: true },
         // subCategories: [{ type: mongoose.Types.ObjectId, ref: 'SubCategories' }],
     },
