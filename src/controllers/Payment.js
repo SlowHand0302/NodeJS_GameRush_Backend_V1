@@ -1,4 +1,5 @@
 const { Payments } = require('../models');
+const axios = require('axios');
 const Stripe = require('stripe');
 require('dotenv').config();
 const stripe = Stripe(process.env.REACT_APP_STRIPE_SECRET_KEY);
@@ -79,18 +80,55 @@ module.exports.GET_StripeConfig = async (req, res, next) => {
 
 // api/payment/stripe/create-payment-intent
 module.exports.POST_StripePaymentIntent = async (req, res, next) => {
+    const { amount } = req.body;
     try {
         const paymentIntent = await stripe.paymentIntents.create({
-            currency: 'eur',
-            amount: 1999,
+            currency: 'usd',
+            amount: amount * 1000,
             automatic_payment_methods: {
                 enabled: true,
             },
         });
         return res.status(200).json({
+            id: paymentIntent.id,
             clientSecret: paymentIntent.client_secret,
         });
     } catch (error) {
         return res.status(400).json(error);
+    }
+};
+
+// api/payment/stripe/:clientSecret/cancel
+module.exports.POST_StripeCancelIntent = async (req, res, next) => {
+    const { clientSecret } = req.params;
+    const { orderId } = req.body;
+    try {
+        const paymentIntent = await stripe.paymentIntents.cancel(clientSecret);
+        if (paymentIntent.status === 'canceled') {
+            const options = {
+                url: `${process.env.DOMAIN}/api/order/updateOne/${orderId}`,
+                method: 'PUT',
+                data: {
+                    status: 'cancelled',
+                },
+            };
+            try {
+                const response = await axios.request(options);
+            } catch (error) {
+                return res.status(500).json({
+                    success: false,
+                    msg: error,
+                });
+            }
+        }
+        return res.status(200).json({
+            success: true,
+            paymentIntent,
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            msg: error,
+        });
     }
 };

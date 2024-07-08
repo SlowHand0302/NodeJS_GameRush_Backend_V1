@@ -100,7 +100,6 @@ module.exports.PUT_UpdateOne = async (req, res, next) => {
     const { _id } = req.params;
     return await Orders.findOneAndUpdate({ _id }, { ...req.body }, { returnOriginal: false })
         .then((order) => {
-            console.log(order);
             if (!order) {
                 return res.status(404).json({
                     success: false,
@@ -172,7 +171,7 @@ module.exports.GET_Search = async (req, res, next) => {
         });
 };
 
-// api/order/readOne/:customerId
+// api/order/readMany/:customerId
 module.exports.GET_ReadByCustomer = async (req, res, next) => {
     const { customer } = req.params;
 

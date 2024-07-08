@@ -8,6 +8,7 @@ const Users = new Schema(
         email: { type: String, required: true },
         password: { type: String, required: true },
         phoneNumb: { type: String, required: true },
+        role: { type: String, required: true, default: 'Customer', enum: ['Customer', 'Admin'] },
     },
     {
         timestamps: true,

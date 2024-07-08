@@ -7,5 +7,6 @@ router.put('/updateOne/:_id', paymentController.PUT_UpdateOne);
 
 router.get('/stripe/config', paymentController.GET_StripeConfig);
 router.post('/stripe/create-payment-intent', paymentController.POST_StripePaymentIntent);
+router.post('/stripe/:clientSecret/cancel', paymentController.POST_StripeCancelIntent);
 
 module.exports = router;

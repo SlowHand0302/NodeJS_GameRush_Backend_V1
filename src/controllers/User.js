@@ -22,6 +22,7 @@ module.exports.POST_CreateUser = async (req, res, next) => {
 // api/user/readMany
 module.exports.GET_ReadMany = async (req, res, next) => {
     return await Users.find({})
+        .select('_id name username email phoneNumb')
         .then((users) => {
             if (users.length === 0) {
                 return res.status(404).json({
@@ -47,6 +48,7 @@ module.exports.GET_ReadMany = async (req, res, next) => {
 module.exports.GET_ReadOne = async (req, res, next) => {
     const { _id } = req.params;
     return await Users.findOne({ _id })
+        .select('_id name username email phoneNumb role')
         .then((user) => {
             if (!user) {
                 return res.status(404).json({
@@ -72,6 +74,7 @@ module.exports.GET_ReadOne = async (req, res, next) => {
 module.exports.GET_ReadBySort = async (req, res, next) => {
     const { sort } = req.query;
     await Users.find({})
+        .select('_id name username email phoneNumb')
         .sort(sort)
         .then((users) => {
             if (users.length === 0) {
@@ -153,28 +156,68 @@ module.exports.POST_Authentication = async (req, res, next) => {
         if (!user) {
             return res.status(404).json({
                 auth: false,
-                msg: 'Not found User',
+                msg: 'Không tìm thấy tài khoản',
             });
         }
         const passwordIsValid = password === user.password;
         if (!passwordIsValid) {
             return res.status(401).json({
                 auth: false,
-                msg: 'Wrong Password',
+                msg: 'Sai mật khẩu',
                 token: null,
             });
         }
-        const token = jwt.sign({ id: user._id }, process.env.SECRET_KEY, { expiresIn: 86400 });
+        const token = jwt.sign({ id: user._id, role: user.role }, process.env.SECRET_KEY, { expiresIn: 86400 });
         return res.status(200).json({
             auth: true,
-            msg: 'Login Success',
+            msg: 'Đăng nhập thành công',
             token,
             user: {
-                id: user._id,
-                name: user.name,
-                phoneNumber: user.phoneNumb,
+                _id: user._id,
                 email: user.email,
+                name: user.name,
+                username: user.username,
+                role: user.role,
             },
         });
     });
+};
+
+module.exports.VerifyAuth = async (req, res, next) => {
+    const token = req.headers['authorization'];
+    if (!token) {
+        return res.status(401).json({
+            auth: false,
+            msg: 'No token provided',
+        });
+    }
+
+    jwt.verify(token.split('Bearer ')[1], process.env.SECRET_KEY, (err, decoded) => {
+        if (err) {
+            return res.status(500).json({
+                auth: false,
+                msg: 'Failed to authentication token',
+            });
+        }
+        if (Math.floor(Date.now() / 1000) > decoded.exp) {
+            return res.status(401).json({
+                auth: false,
+                msg: 'Your token is expired',
+            });
+        }
+        req.userRole = decoded.role;
+        next();
+    });
+};
+
+module.exports.checkRole = (roles) => {
+    return (req, res, next) => {
+        if (!roles.includes(req.userRole)) {
+            return res.status(403).json({
+                auth: false,
+                msg: 'Forbidden: You do not have the required role',
+            });
+        }
+        next();
+    };
 };
