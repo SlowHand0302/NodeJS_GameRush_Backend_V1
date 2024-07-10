@@ -9,7 +9,11 @@ router.get(
     [userController.VerifyAuth, userController.checkRole(['Customer', 'Admin'])],
     userController.GET_ReadOne,
 );
-router.put('/updateOne/:_id', userController.PUT_UpdateOne);
+router.put(
+    '/updateOne/:_id',
+    [userController.VerifyAuth, userController.checkRole(['Customer', 'Admin'])],
+    userController.PUT_UpdateOne,
+);
 router.get(
     '/readBySort',
     [userController.VerifyAuth, userController.checkRole(['Admin'])],

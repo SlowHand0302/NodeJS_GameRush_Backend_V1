@@ -73,6 +73,7 @@ module.exports.GET_ReadOne = async (req, res, next) => {
 // api/user/readBySort?sort=type
 module.exports.GET_ReadBySort = async (req, res, next) => {
     const { sort } = req.query;
+    console.log(req.query);
     await Users.find({})
         .select('_id name username email phoneNumb')
         .sort(sort)
@@ -126,6 +127,7 @@ module.exports.PUT_UpdateOne = async (req, res, next) => {
 module.exports.GET_Search = async (req, res, next) => {
     const name = req.query.name;
     return await Users.find({ name: { $regex: name, $options: 'i' } })
+        .select('_id name username email phoneNumb')
         .limit(10)
         .exec()
         .then((users) => {
@@ -177,6 +179,7 @@ module.exports.POST_Authentication = async (req, res, next) => {
                 email: user.email,
                 name: user.name,
                 username: user.username,
+                phoneNumb: user.phoneNumb,
                 role: user.role,
             },
         });
