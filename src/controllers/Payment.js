@@ -2,7 +2,9 @@ const { Payments } = require('../models');
 const axios = require('axios');
 const Stripe = require('stripe');
 require('dotenv').config();
-const stripe = Stripe(process.env.REACT_APP_STRIPE_SECRET_KEY);
+const stripe = Stripe(
+    'sk_test_51PJrV2IsuYX9DTgmTIG3epvWMEzXNn6axWs1sxjRh2CpYkro2n8IldAWVzAQIe4fcwppP8GdWJp66VCk0leT9LUl0040SwNtn1',
+);
 
 // api/payment/readMany
 module.exports.GET_ReadMany = async (req, res, next) => {
@@ -83,8 +85,9 @@ module.exports.POST_StripePaymentIntent = async (req, res, next) => {
     const { amount } = req.body;
     try {
         const paymentIntent = await stripe.paymentIntents.create({
+            amount: Math.round(amount * 1000),
             currency: 'usd',
-            amount: amount * 1000,
+            payment_method: 'pm_card_visa',
             automatic_payment_methods: {
                 enabled: true,
             },
@@ -104,6 +107,7 @@ module.exports.POST_StripeCancelIntent = async (req, res, next) => {
     const { orderId } = req.body;
     try {
         const paymentIntent = await stripe.paymentIntents.cancel(clientSecret);
+        console.log(paymentIntent.status);
         if (paymentIntent.status === 'canceled') {
             const options = {
                 url: `${process.env.DOMAIN}/api/order/updateOne/${orderId}`,
@@ -114,6 +118,7 @@ module.exports.POST_StripeCancelIntent = async (req, res, next) => {
             };
             try {
                 const response = await axios.request(options);
+                console.log(response.data.data);
             } catch (error) {
                 return res.status(500).json({
                     success: false,

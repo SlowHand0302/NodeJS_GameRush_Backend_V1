@@ -187,6 +187,7 @@ module.exports.GET_ReadByCustomer = async (req, res, next) => {
                 },
             },
         ])
+        .sort({ createdAt: -1 })
         .lean()
         .then((orders) => {
             if (!orders) {
